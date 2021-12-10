@@ -1,0 +1,20 @@
+--Load the data into the table
+inputDialogues = Load 'hdfs:///user/root/inputs/episode04.txt' using PigStorage('\t') As (name:chararray, line:chararray);
+
+--Rank each line in the text file
+ranked = RANK inputDialogues;
+
+-- Filter only dialogues from the table
+onlyDialogues = FILTER ranked BY (rank_inputDialogues > 2);
+
+-- Group table by name
+groupByName = GROUP onlyDialogues By name;
+
+-- Generate the result format
+names = FOREACH groupByName GENERATE $0 as name, COUNT($1) as no_of_lines;
+
+-- Sort the data by no. of spoken lines by each character
+namesOrdered = ORDER names BY no_of_lines DESC;
+
+-- Store the data in the hdfs
+STORE namesOrdered INTO 'hdfs:///user/root/outputs/ep06' USING PigStorage('\t');
